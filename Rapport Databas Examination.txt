@@ -1,0 +1,111 @@
+Database Lab Report
+    Name: Alan Moddarisi
+ Course: Database Course
+
+Task Documentation:
+
+1. Setting Up Vagrant and Docker Containers                                                                                                                            
+   Install Vagrant and Docker:
+   Download and install Vagrant from vagrantup.com.
+    Download and install Docker from docker.com.
+
+ 2. Initialize Vagrant:
+vagrant init
+vagrant up (inside cd/database_course/resources/labs)
+
+3. Connect to Vagrant VM
+vagrant ssh (inside cd/database_course/resources/labs)
+
+4. Set Up Docker Containers:
+    Navigate to the project directory.
+    Use docker-compose.yml to set up the environment
+     docker compose up --build --detach
+
+5. Creating TABLES and user with privleges in DB
+Purpose: Store information about discussion threads.
+SQL Statement:
+CREATE TABLE threads (
+    id SERIAL PRIMARY KEY,
+    title VARCHAR(255) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    author VARCHAR(255),
+    topic_description TEXT,
+    CONSTRAINT unique_title UNIQUE (title)
+);
+   Purpose: Store responses to threads.
+CREATE TABLE responses (
+    id SERIAL PRIMARY KEY,
+    thread_id INTEGER REFERENCES threads(id) ON DELETE CASCADE,
+    author VARCHAR(255),
+    content TEXT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+Inside jumpbox.shell.sh run command psql "postgresql://admin:Ct=Snackul4@database-1.int.agency.test/forum_data"
+CREATE USER db_app_user WITH PASSWORD '1234';
+GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO db_app_user;
+6. Implementing Database Queries
+Tasks:
+    A): GET /api/threads:
+    Query: Retrieve all threads with their details.
+    Reasoning: Display all forum threads to the user.
+
+   B): POST /api/threads:
+        Query: Insert a new thread.
+        Reasoning: Allow users to create new discussion threads.
+
+    C): GET /api/threads/$ID:
+        Query: Retrieve a specific thread by ID.
+        Reasoning: Display details of a specific thread.
+
+   D:)  PUT /api/threads/$ID:
+        Query: Update an existing thread.
+        Reasoning: Allow users to modify their threads.
+
+    F:) DELETE /api/threads/$ID:
+        Query: Delete a thread.
+        Reasoning: Allow users to remove their threads.
+7. Verification Steps
+Manual Verification:
+    Functionality: Manually tested each endpoint using test data.
+    Authentication: Ensured correct user permissions.
+    Operations: Verified data retrieval, insertion, update, and deletion.
+
+Automated Verification
+    Script: Used forum_test_script.py to automate testing.
+    Output: 
+root@jumpbox:~# forum_test_script.py
+INFO: Starting test execution against "http://forum.int.agency.test:5000"
+INFO: Sending HTTP request to fetching thread list as pam - GET http://forum.int.agency.test:5000/api/threads with body:
+None
+INFO: Sending HTTP request to cleanup previous example thread "Office manners" as malory - DELETE http://forum.int.agency.test:5000/api/threads/25 with body:
+None
+INFO: Sending HTTP request to cleanup previous example thread "Fight club anyone?!" as pam - DELETE http://forum.int.agency.test:5000/api/threads/24 with body:
+None
+INFO: Sending HTTP request to create fightclub thread as pam - POST http://forum.int.agency.test:5000/api/threads with body:
+{'title': 'Fight club anyone?!', 'topic_description': 'I love bare-knuckle boxing. Who is with me?!'}
+INFO: Sending HTTP request to create office manners thread as malory - POST http://forum.int.agency.test:5000/api/threads with body:
+{'title': 'Office manners', 'topic_description': 'Let us discuss how we should behave in the office. Suggestions?'}
+INFO: Sending HTTP request to answer manners thread as cheryl - PUT http://forum.int.agency.test:5000/api/threads/29 with body:
+'I suggest we disallow storing "experiments" in the kitchen fridge!'
+INFO: Sending HTTP request to answer manners thread as malory - PUT http://forum.int.agency.test:5000/api/threads/29 with body:
+'Agreed. In the same vein: glue is not food! :-@'
+INFO: Sending HTTP request to fetching manners thread as pam - GET http://forum.int.agency.test:5000/api/threads/29 with body:
+None
+INFO: Sending HTTP request to create apology thread as cyril - POST http://forum.int.agency.test:5000/api/threads with body:
+{'title': 'My sincerest apology', 'topic_description': 'Just went way over the line. I promise to never strangle again!'}
+INFO: Sending HTTP request to answer apology thread as pam - PUT http://forum.int.agency.test:5000/api/threads/30 with body:
+'HahHAHAHAHahahahahaaa OMG ROFLMAO!!!11one'
+INFO: Sending HTTP request to fetching thread list as pam - GET http://forum.int.agency.test:5000/api/threads with body:
+None
+INFO: Sending HTTP request to delete apology thread as cyril - DELETE http://forum.int.agency.test:5000/api/threads/30 with body:
+None
+INFO: Sending HTTP request to fetching thread list as cyril - GET http://forum.int.agency.test:5000/api/threads with body:
+None
+INFO: Sending HTTP request to fetch list of top posters as malory - GET http://forum.int.agency.test:5000/api/top_posters with body:
+None
+INFO: Sending HTTP request to delete non-authored thread as malory - DELETE http://forum.int.agency.test:5000/api/threads/28 with body:
+None
+INFO: Sending HTTP request to create duplicate title thread as pam - POST http://forum.int.agency.test:5000/api/threads with body:
+{'title': 'Fight club anyone?!', 'topic_description': 'Got no answers in previous thread - WHO IS WITH ME?!'}
+INFO: Successfully executed tests! :-D
+
